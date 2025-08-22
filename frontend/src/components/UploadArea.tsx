@@ -15,7 +15,9 @@ export type UploadResult = {
   uploadedAt: string;
 };
 
-export default function UploadArea() {
+type UploadAreaProps = { onUploadSuccess?: () => void };
+
+export default function UploadArea({ onUploadSuccess }: UploadAreaProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,6 +60,7 @@ export default function UploadArea() {
         throw new Error(data?.error || 'Upload failed');
       }
       setResult(data as UploadResult);
+      onUploadSuccess?.();
     } catch (e: any) {
       setError(e.message || 'Upload failed');
     } finally {

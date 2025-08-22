@@ -12,7 +12,9 @@ type ImageItem = {
   uploadedAt: string;
 };
 
-export default function Gallery() {
+type GalleryProps = { refreshKey?: number };
+
+export default function Gallery({ refreshKey }: GalleryProps) {
   const [items, setItems] = useState<ImageItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -33,7 +35,7 @@ export default function Gallery() {
       }
     };
     load();
-  }, []);
+  }, [refreshKey]);
 
   if (loading) return <p>Loading images…</p>;
   if (error) return <p role="alert" style={{ color: 'red' }}>{error}</p>;
