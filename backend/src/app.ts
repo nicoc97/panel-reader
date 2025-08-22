@@ -191,9 +191,9 @@ app.post('/api/v1/uploads', upload.single('image'), async (req: express.Request 
       throw dbErr;
     }
 
-    const url = process.env.PUBLIC_URL
-      ? `${process.env.PUBLIC_URL}/uploads/${req.file.filename}`
-      : `/uploads/${req.file.filename}`;
+    // In development, use relative URLs so Vite proxy works correctly
+    const publicBase = isProd ? (process.env.PUBLIC_URL || `http://localhost:${PORT}`) : '';
+    const url = `${publicBase}/uploads/${req.file.filename}`;
 
     return res.status(201).json({
       id: image.id,
@@ -251,6 +251,8 @@ app.get('/api/v1/images', async (req, res, next) => {
       prisma.image.count(),
     ]);
 
+    // In development, use relative URLs so Vite proxy works correctly
+    const publicBase = isProd ? (process.env.PUBLIC_URL || `http://localhost:${PORT}`) : '';
     const mapped = items.map((image) => ({
       id: image.id,
       filename: image.filename,
@@ -259,7 +261,7 @@ app.get('/api/v1/images', async (req, res, next) => {
       size: image.size,
       width: image.width,
       height: image.height,
-      url: process.env.PUBLIC_URL ? `${process.env.PUBLIC_URL}/uploads/${image.filename}` : `/uploads/${image.filename}`,
+      url: `${publicBase}/uploads/${image.filename}`,
       uploadedAt: image.uploadedAt,
     }));
 

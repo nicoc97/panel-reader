@@ -17,24 +17,44 @@ type GalleryProps = { refreshKey?: number };
 export default function Gallery({ refreshKey }: GalleryProps) {
   const [items, setItems] = useState<ImageItem[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
+    let cancelled = false;
+    const controller = new AbortController();
+
+    const load = async (attempt = 0) => {
+      if (cancelled) return;
+      if (attempt === 0) setLoading(true);
       setError(null);
       try {
-        const res = await fetch('/api/v1/images?limit=50');
+        const res = await fetch('/api/v1/images?limit=50', { signal: controller.signal });
         const data = await res.json();
         if (!res.ok) throw new Error(data?.error || 'Failed to load images');
-        setItems(data.items || []);
-      } catch (e: any) {
-        setError(e.message || 'Failed to load images');
-      } finally {
+        if (cancelled) return;
+        setItems(Array.isArray(data.items) ? data.items : []);
         setLoading(false);
+      } catch (e: any) {
+        if (cancelled) return;
+        // Network/temporary error: retry with backoff up to 5 attempts
+        const isAbort = e?.name === 'AbortError';
+        if (!isAbort && attempt < 5) {
+          const delay = Math.min(1000 * 2 ** attempt, 8000);
+          setTimeout(() => load(attempt + 1), delay);
+          // keep loading=true while retrying
+        } else {
+          setError(e?.message || 'Failed to load images');
+          setLoading(false);
+        }
       }
     };
+
     load();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
   }, [refreshKey]);
 
   if (loading) return <p>Loading images…</p>;
