@@ -50,3 +50,17 @@ docker-compose.override.yml
 
 # Prisma
 backend/src/generated/
+
+# Uploads
+uploads/
+*.jpg
+*.png
+*.jpeg
+
+# Prisma
+*.db
+*.db-journal
+
+# Testing
+coverage/
+*.test.js
