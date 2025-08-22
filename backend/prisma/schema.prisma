@@ -1,0 +1,60 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Simple schema for MVP
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  images Image[]
+  panelDefinitions PanelDefinition[]
+
+  @@map("users")
+}
+
+model Image {
+  id        String   @id @default(cuid())
+  filename  String
+  originalName String
+  mimeType  String
+  size      Int
+  width     Int?
+  height    Int?
+  uploadedAt DateTime @default(now())
+
+  // Relations
+  userId   String
+  user     User     @relation(fields: [userId], references: [id])
+  panelDefinitions PanelDefinition[]
+
+  @@map("images")
+}
+
+model PanelDefinition {
+  id        String   @id @default(cuid())
+  panels    Json     // Array of panel coordinates and properties
+  status    String   @default("manual") // "manual", "auto", "community"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  imageId String
+  image   Image  @relation(fields: [imageId], references: [id])
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
+
+  @@map("panel_definitions")
+}
